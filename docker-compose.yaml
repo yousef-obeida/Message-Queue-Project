@@ -1,0 +1,24 @@
+services:
+  app1:
+    build: "./Web App 1"
+    ports:
+      - "8081:80"
+    command: bash -c "mv Form.php index.php && apache2-foreground"
+    depends_on:
+      - redis
+
+  app2:
+    build: "./Web App 2"
+    ports:
+      - "8082:80"
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+
+volumes:
+  redis_data:
