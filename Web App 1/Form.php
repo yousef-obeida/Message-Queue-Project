@@ -7,7 +7,7 @@ try {
     // change '127.0.0.1' to the name of your redis service (e.g. 'redis')
     $redis = new Predis\Client([
         'scheme' => 'tcp',
-        'host' => '127.0.0.1',
+        'host' => 'redis',
         'port' => 6379,
     ]);
 
