@@ -1,29 +1,33 @@
 <?php
-session_start();
+require 'vendor/autoload.php';
 
-// Increment visit counter on each page load
-if (!isset($_SESSION['page_visits_counter'])) {
-    $_SESSION['page_visits_counter'] = 0;
-}
-$_SESSION['page_visits_counter']++;
-$visits = $_SESSION['page_visits_counter'];
+try {
+    // Connect to Redis.
+    // Note: If you run this inside a Docker container using docker-compose, 
+    // change '127.0.0.1' to the name of your redis service (e.g. 'redis')
+    $redis = new Predis\Client([
+        'scheme' => 'tcp',
+        'host' => '127.0.0.1',
+        'port' => 6379,
+    ]);
 
-// Initialize message list in session if it doesn't exist
-if (!isset($_SESSION['submitted_messages_list'])) {
-    $_SESSION['submitted_messages_list'] = [];
-}
+    // Increment visit counter on each page load
+    $visits = $redis->incr('visit_count');
 
-// Handle form submission
-$statusMessage = '';
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['message'])) {
-    $message = trim($_POST['message']);
-    if (!empty($message)) {
-        // Add submitted message to the session list
-        $_SESSION['submitted_messages_list'][] = $message;
-        $statusMessage = 'Message submitted successfully!';
-    } else {
-        $statusMessage = 'Please enter a message.';
+    // Handle form submission
+    $statusMessage = '';
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['message'])) {
+        $message = trim($_POST['message']);
+        if (!empty($message)) {
+            // Add submitted message to the redis list
+            $redis->rpush('messages_log', $message);
+            $statusMessage = 'Message submitted successfully!';
+        } else {
+            $statusMessage = 'Please enter a message.';
+        }
     }
+} catch (Exception $e) {
+    die("Unable to connect to Redis: " . $e->getMessage());
 }
 ?>
 <!DOCTYPE html>
