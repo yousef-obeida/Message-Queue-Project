@@ -1,0 +1,31 @@
+services:
+  # Web App 1: Message Collector (Producer + Counter)
+  app1:
+    build: ./Web\ App\ 1  # Note: Use backslash for spaces in folder names
+    ports:
+      - "8081:80"
+    # This command renames Form.php to index.php so Apache serves it automatically
+    command: bash -c "mv Form.php index.php && apache2-foreground"
+    depends_on:
+      - redis
+
+  # Web App 2: Dashboard (Observer)
+  app2:
+    build: ./Web\ App\ 2
+    ports:
+      - "8082:80"
+    depends_on:
+      - redis
+
+  # Shared Redis Database
+  redis:
+    image: redis:alpine
+    # "--appendonly yes" ensures that all data is persisted to the disk [cite: 19]
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis_data:/data
+    networks:
+      - default
+
+volumes:
+  [cite_start]redis_data: # Persistent storage for your visit count and messages [cite: 19]
